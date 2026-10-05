@@ -1,0 +1,324 @@
+/*
+ * The application shell and the stack of layers.
+ *
+ * Three layers are stacked in the same place. Layer i is shifted slightly to
+ * the right and down, so the title strip of the layer underneath keeps peeking
+ * out and can be clicked to go back. A layer that has not been opened yet
+ * waits below the screen.
+ */
+
+.app {
+  display: grid;
+  grid-template-rows: var(--topbar-h) minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+ * Top bar
+ * ------------------------------------------------------------------------- */
+
+.topbar {
+  --focus: var(--yellow);
+  position: relative;
+  z-index: var(--z-topbar);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0 var(--gutter);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.brand__mark {
+  position: relative;
+  width: 30px;
+  height: 30px;
+}
+
+.brand__mark i {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--ink);
+}
+
+.brand__mark i:nth-child(1) {
+  top: 0;
+  left: 0;
+  background: var(--yellow);
+}
+
+.brand__mark i:nth-child(2) {
+  top: 6px;
+  left: 6px;
+  background: var(--paper);
+}
+
+.brand__mark i:nth-child(3) {
+  top: 12px;
+  left: 12px;
+  background: var(--pink);
+}
+
+.brand__name {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.steps {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.steps__link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: var(--border-thin) solid transparent;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast),
+    color var(--dur-fast);
+}
+
+.steps__link b {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  opacity: 0.7;
+}
+
+.steps__link:hover {
+  border-color: var(--paper);
+}
+
+.steps__link[aria-current='step'] {
+  background: var(--step-color, var(--yellow));
+  color: var(--ink);
+}
+
+.steps__link[aria-current='step'] b {
+  opacity: 1;
+}
+
+.steps__link[data-layer-link='results'] {
+  --step-color: var(--paper);
+}
+
+.steps__link[data-layer-link='live'] {
+  --step-color: var(--pink);
+}
+
+@media (max-width: 480px) {
+  .brand__name {
+    display: none;
+  }
+
+  .steps__link {
+    padding: 0 var(--space-2);
+  }
+}
+
+/* On the narrowest phones the step numbers give way to the labels. */
+@media (max-width: 360px) {
+  .steps__link b {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Layer stack
+ * ------------------------------------------------------------------------- */
+
+.stack {
+  position: relative;
+  margin: 0 clamp(8px, 1.6vw, 20px);
+  overflow: clip;
+}
+
+.layer {
+  position: absolute;
+  inset: calc(var(--i) * var(--peek-y)) 0 0 calc(var(--i) * var(--peek-x));
+  z-index: calc(var(--z-layer) + var(--i));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--on-surface);
+  border: var(--border) solid var(--ink);
+  border-bottom: 0;
+  transition:
+    transform var(--dur-layer-in) var(--ease-out),
+    visibility 0s;
+  will-change: transform;
+}
+
+.layer--live {
+  border-color: var(--night-line);
+}
+
+/* A layer not opened yet: it sits below the screen. Leaving is faster than entering. */
+.layer[data-state='ahead'] {
+  transform: translateY(calc(100% + 16px));
+  visibility: hidden;
+  transition:
+    transform var(--dur-layer-out) var(--ease-in),
+    visibility 0s linear var(--dur-layer-out);
+}
+
+.layer__tab {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--peek-y);
+  padding: 0 var(--space-4);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.layer__num {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  padding: 2px 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.layer__title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.layer__title:focus-visible {
+  outline-offset: 4px;
+}
+
+.layer__hint {
+  color: var(--on-surface-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The title strip of a layer underneath turns into a link for going back. */
+.layer__return {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.layer__return span {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.layer[data-state='behind'] .layer__return {
+  display: flex;
+}
+
+.layer[data-state='behind'] .layer__return:hover {
+  background: color-mix(in srgb, var(--on-surface) 12%, transparent);
+}
+
+.layer[data-state='behind'] .layer__return:focus-visible {
+  outline-offset: -5px;
+}
+
+.layer[data-state='behind'] .layer__hint {
+  display: none;
+}
+
+.layer__body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  /* A focused field must not be covered by the action bar stuck to the bottom. */
+  scroll-padding-block: var(--space-5) 120px;
+}
+
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: clamp(20px, 3.5vw, 48px) var(--gutter) var(--space-8);
+}
+
+@media (max-width: 720px) {
+  .layer__hint {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Empty states (layers 02 and 03 before a simulation has run)
+ * ------------------------------------------------------------------------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  max-width: 34rem;
+  padding: var(--space-7) 0;
+}
+
+.empty__num {
+  font-family: var(--font-mono);
+  font-size: clamp(5rem, 18vw, 9rem);
+  font-weight: 700;
+  line-height: 0.8;
+  -webkit-text-stroke: 3px var(--on-surface);
+  color: transparent;
+}
+
+.empty__title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.footnote {
+  margin-top: var(--space-5);
+  color: var(--on-surface-muted);
+  font-size: var(--text-sm);
+  max-width: 70ch;
+}

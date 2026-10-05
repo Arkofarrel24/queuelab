@@ -1,0 +1,139 @@
+/*
+ * Design tokens. Components never use raw color values; everything goes
+ * through the variables here, so each layer can have its own colors just by
+ * overriding a few variables.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Base colors */
+  --ink: #0e0e11;
+  --paper: #fffbf0;
+  --white: #ffffff;
+  --yellow: #ffd60a;
+  --yellow-soft: #fff3b0;
+  --blue: #5ba4ff;
+  --pink: #ff7eb6;
+  --lime: #b8f23a;
+  --red: #ff5a4d;
+  --red-soft: #ffe9e6;
+  --red-text: #a3180f;
+  --night: #111118;
+  --night-raised: #1d1d2a;
+  --night-line: #f6f4ec;
+
+  /* Color roles that mean the same thing on every layer */
+  --color-analytic: var(--blue);
+  --color-simulated: var(--pink);
+  --color-danger: var(--red);
+  --color-ok: var(--lime);
+
+  /* Typography */
+  --font-display: 'Bricolage Grotesque', 'Arial Narrow', system-ui, sans-serif;
+  --font-body: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Fira Code', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 3rem;
+
+  /* Spacing, multiples of 4px */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Borders and hard shadows */
+  --border: 3px;
+  --border-thin: 2px;
+  --shadow-sm: 3px 3px 0;
+  --shadow-md: 6px 6px 0;
+  --shadow-lg: 9px 9px 0;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-layer-in: 460ms;
+  --dur-layer-out: 300ms;
+
+  /* Stacking order */
+  --z-layer: 10;
+  --z-sticky: 20;
+  --z-topbar: 40;
+  --z-skip: 100;
+
+  /* Layer arrangement: how much of the layers underneath peeks out */
+  --topbar-h: 56px;
+  --peek-y: 48px;
+  --peek-x: 24px;
+  --gutter: clamp(16px, 3.2vw, 40px);
+}
+
+@media (max-width: 720px) {
+  :root {
+    --peek-y: 44px;
+    --peek-x: 6px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Colors per layer
+ * ------------------------------------------------------------------------- */
+
+.layer--setup {
+  --surface: var(--yellow);
+  --surface-raised: var(--white);
+  --surface-sunken: var(--yellow-soft);
+  --on-surface: var(--ink);
+  --on-surface-muted: #4a4313;
+  --on-raised: var(--ink);
+  --on-raised-muted: #55535f;
+  --line: var(--ink);
+  --shadow-color: var(--ink);
+  --accent: var(--ink);
+  --on-accent: var(--yellow);
+  --focus: #1b3fd6;
+}
+
+.layer--results {
+  --surface: var(--paper);
+  --surface-raised: var(--white);
+  --surface-sunken: #f3ecd9;
+  --on-surface: var(--ink);
+  --on-surface-muted: #55535f;
+  --on-raised: var(--ink);
+  --on-raised-muted: #55535f;
+  --line: var(--ink);
+  --shadow-color: var(--ink);
+  --accent: var(--ink);
+  --on-accent: var(--paper);
+  --focus: #1b3fd6;
+}
+
+/* .theme-night: a dark panel that stands on its own inside another layer. */
+.layer--live,
+.theme-night {
+  --surface: var(--night);
+  --surface-raised: var(--night-raised);
+  --surface-sunken: #08080c;
+  --on-surface: var(--night-line);
+  --on-surface-muted: #b9b7c6;
+  --on-raised: var(--night-line);
+  --on-raised-muted: #b9b7c6;
+  --line: var(--night-line);
+  --shadow-color: var(--pink);
+  --accent: var(--lime);
+  --on-accent: var(--ink);
+  --focus: var(--lime);
+}

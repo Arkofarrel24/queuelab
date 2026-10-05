@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Setup · QueueLab</title>
+    <meta
+      name="description"
+      content="A service queue simulator: compare the analytic formulas for M/M/1, M/M/c, and M/M/c/K with a discrete-event simulation."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e0e11'/%3E%3Crect x='5' y='5' width='16' height='16' fill='%23ffd60a'/%3E%3Crect x='11' y='11' width='16' height='16' fill='%23ff7eb6'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Fira+Code:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+    <link rel="stylesheet" href="styles/views.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script type="module" src="src/ui/app.js"></script>
+  </head>
+  <body>
+    <!-- Icon sprite (2px line style, adapted from Lucide, ISC license) -->
+    <svg class="sprite" aria-hidden="true" focusable="false">
+      <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3" /></symbol>
+      <symbol id="i-pause" viewBox="0 0 24 24">
+        <rect x="14" y="4" width="4" height="16" rx="1" />
+        <rect x="6" y="4" width="4" height="16" rx="1" />
+      </symbol>
+      <symbol id="i-skip" viewBox="0 0 24 24">
+        <polygon points="5 4 15 12 5 20 5 4" />
+        <line x1="19" y1="5" x2="19" y2="19" />
+      </symbol>
+      <symbol id="i-restart" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+      </symbol>
+      <symbol id="i-arrow-right" viewBox="0 0 24 24">
+        <path d="M5 12h14" />
+        <path d="m12 5 7 7-7 7" />
+      </symbol>
+      <symbol id="i-arrow-left" viewBox="0 0 24 24">
+        <path d="m12 19-7-7 7-7" />
+        <path d="M19 12H5" />
+      </symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24">
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+      </symbol>
+      <symbol id="i-shuffle" viewBox="0 0 24 24">
+        <path d="m18 14 4 4-4 4" />
+        <path d="m18 2 4 4-4 4" />
+        <path d="M2 18h1.97a4 4 0 0 0 3.3-1.7l5.45-8.6A4 4 0 0 1 16 6h6" />
+        <path d="M2 6h1.97a4 4 0 0 1 3.6 2.2" />
+        <path d="M22 18h-6a4 4 0 0 1-3.3-1.8l-.35-.45" />
+      </symbol>
+    </svg>
+
+    <a class="skip-link" href="#content">Skip to content</a>
+
+    <div class="app">
+      <header class="topbar">
+        <a class="brand" href="#setup" aria-label="QueueLab, go to the Setup layer">
+          <span class="brand__mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="brand__name">QueueLab</span>
+        </a>
+        <h1 class="sr-only">QueueLab, a service queue simulator</h1>
+        <nav class="steps" aria-label="Layers">
+          <a class="steps__link" href="#setup" data-layer-link="setup"><b>01</b><span>Setup</span></a>
+          <a class="steps__link" href="#results" data-layer-link="results"><b>02</b><span>Results</span></a>
+          <a class="steps__link" href="#live" data-layer-link="live"><b>03</b><span>Live</span></a>
+        </nav>
+      </header>
+
+      <main class="stack" id="content">
+        <!-- ============================ LAYER 01: SETUP ============================ -->
+        <section class="layer layer--setup" data-layer="setup" data-state="active" style="--i: 0" aria-labelledby="title-setup">
+          <header class="layer__tab">
+            <span class="layer__num" aria-hidden="true">01</span>
+            <h2 class="layer__title" id="title-setup" tabindex="-1">Setup</h2>
+            <p class="layer__hint">Define the queueing system</p>
+            <a class="layer__return" href="#setup">
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+              <span>Back to <span class="sr-only">layer 01,</span> Setup</span>
+            </a>
+          </header>
+
+          <div class="layer__body">
+            <div class="wrap">
+              <div class="hero">
+                <div class="hero__text">
+                  <p class="eyebrow">Queueing theory · formulas vs. simulation</p>
+                  <p class="hero__title">How long will people <mark>really wait?</mark></p>
+                  <p class="hero__lead">
+                    Set the arrival rate, the service rate, and the number of servers. The analytic
+                    formulas answer instantly; a discrete-event simulation tests whether that answer
+                    can be trusted.
+                  </p>
+                </div>
+
+                <figure class="stage theme-night" id="stage" data-playing="true">
+                  <div class="stage__bar">
+                    <span class="stage__badge"><i aria-hidden="true"></i>Preview</span>
+                    <span class="stage__model" id="stage-model"></span>
+                    <button type="button" class="stage__toggle" id="stage-toggle">
+                      <svg class="icon icon--solid" aria-hidden="true"><use id="stage-toggle-icon" href="#i-pause" /></svg>
+                      <span id="stage-toggle-label">Pause</span>
+                    </button>
+                  </div>
+                  <canvas id="stage-canvas" role="img" aria-label="Moving illustration: people arrive from the left, queue up, get served at a server, then leave, following the parameters currently entered"></canvas>
+                  <figcaption class="stage__caption">
+                    A queue running on the parameters below. Change a number and the queue changes with it.
+                  </figcaption>
+                </figure>
+              </div>
+
+              <div class="presets" role="group" aria-labelledby="preset-label">
+                <span class="presets__label" id="preset-label">Quick examples</span>
+                <button type="button" class="preset" data-preset="single">Single server</button>
+                <button type="button" class="preset" data-preset="triple">Three servers</button>
+                <button type="button" class="preset" data-preset="saturated">Nearly saturated</button>
+                <button type="button" class="preset" data-preset="unstable">Unstable</button>
+                <button type="button" class="preset" data-preset="limited">Limited waiting room</button>
+                <button type="button" class="preset" data-preset="priority">Priority lane</button>
+              </div>
+
+              <form class="setup" id="setup-form" novalidate>
+                <div class="setup__fields">
+                  <fieldset class="card group">
+                    <legend class="group__legend"><span>A</span> Customer flow</legend>
+
+                    <div class="field-row">
+                      <div class="field">
+                        <label class="field__label" for="f-lambda">Arrival rate <i>λ</i></label>
+                        <div class="field__control">
+                          <input id="f-lambda" name="arrivalRate" type="number" inputmode="decimal" step="any" min="0.01" max="1000" value="8" required aria-describedby="h-lambda e-lambda" />
+                          <span class="field__unit">customers / hour</span>
+                        </div>
+                        <p class="field__help" id="h-lambda">Average number of customers arriving each hour.</p>
+                        <p class="field__error" id="e-lambda" role="alert"></p>
+                      </div>
+
+                      <div class="field">
+                        <label class="field__label" for="f-mu">Service rate per server <i>μ</i></label>
+                        <div class="field__control">
+                          <input id="f-mu" name="serviceRate" type="number" inputmode="decimal" step="any" min="0.01" max="1000" value="10" required aria-describedby="h-mu e-mu" />
+                          <span class="field__unit">customers / hour</span>
+                        </div>
+                        <p class="field__help" id="h-mu">How many customers one server can handle each hour.</p>
+                        <p class="field__error" id="e-mu" role="alert"></p>
+                      </div>
+                    </div>
+
+                    <fieldset class="field field--plain">
+                      <legend class="field__label">Number of servers <i>c</i></legend>
+                      <div class="chips">
+                        <label class="chip-radio"><input type="radio" name="servers" value="1" checked /><span>1</span></label>
+                        <label class="chip-radio"><input type="radio" name="servers" value="2" /><span>2</span></label>
+                        <label class="chip-radio"><input type="radio" name="servers" value="3" /><span>3</span></label>
+                        <label class="chip-radio"><input type="radio" name="servers" value="4" /><span>4</span></label>
+                        <label class="chip-radio"><input type="radio" name="servers" value="5" /><span>5</span></label>
+                        <label class="chip-radio"><input type="radio" name="servers" value="6" /><span>6</span></label>
+                        <label class="chip-radio"><input type="radio" name="servers" value="7" /><span>7</span></label>
+                        <label class="chip-radio"><input type="radio" name="servers" value="8" /><span>8</span></label>
+                        <label class="chip-radio"><input type="radio" name="servers" value="9" /><span>9</span></label>
+                        <label class="chip-radio"><input type="radio" name="servers" value="10" /><span>10</span></label>
+                      </div>
+                    </fieldset>
+                  </fieldset>
+
+                  <fieldset class="card group">
+                    <legend class="group__legend"><span>B</span> Queue rules</legend>
+
+                    <fieldset class="field field--plain">
+                      <legend class="field__label">Queue discipline</legend>
+                      <div class="options">
+                        <label class="option">
+                          <input type="radio" name="discipline" value="FIFO" checked />
+                          <span class="option__body"><b>FIFO</b><small>First come, first served</small></span>
+                        </label>
+                        <label class="option">
+                          <input type="radio" name="discipline" value="LIFO" />
+                          <span class="option__body"><b>LIFO</b><small>Last come, first served</small></span>
+                        </label>
+                        <label class="option">
+                          <input type="radio" name="discipline" value="PRIORITY" />
+                          <span class="option__body"><b>Priority</b><small>The priority class jumps the queue</small></span>
+                        </label>
+                      </div>
+                    </fieldset>
+
+                    <div class="field reveal" id="wrap-share" hidden>
+                      <label class="field__label" for="f-share">Share of priority customers</label>
+                      <div class="field__control">
+                        <input id="f-share" name="priorityShare" type="number" inputmode="decimal" step="any" min="1" max="99" value="20" aria-describedby="h-share e-share" />
+                        <span class="field__unit">%</span>
+                      </div>
+                      <p class="field__help" id="h-share">
+                        Non-preemptive: priority customers jump the queue, but never interrupt a
+                        service already in progress.
+                      </p>
+                      <p class="field__error" id="e-share" role="alert"></p>
+                    </div>
+
+                    <fieldset class="field field--plain">
+                      <legend class="field__label">System capacity</legend>
+                      <div class="options options--two">
+                        <label class="option">
+                          <input type="radio" name="capacityMode" value="unlimited" checked />
+                          <span class="option__body"><b>Unlimited</b><small>Everyone may join the queue</small></span>
+                        </label>
+                        <label class="option">
+                          <input type="radio" name="capacityMode" value="limited" />
+                          <span class="option__body"><b>Limited</b><small>When full, customers are turned away</small></span>
+                        </label>
+                      </div>
+                    </fieldset>
+
+                    <div class="field reveal" id="wrap-capacity" hidden>
+                      <label class="field__label" for="f-capacity">Capacity <i>K</i></label>
+                      <div class="field__control">
+                        <input id="f-capacity" name="capacity" type="number" inputmode="numeric" step="1" min="1" max="200" value="5" aria-describedby="h-capacity e-capacity" />
+                        <span class="field__unit">customers</span>
+                      </div>
+                      <p class="field__help" id="h-capacity">
+                        The most customers allowed in the system: those waiting plus those being
+                        served. At least the number of servers.
+                      </p>
+                      <p class="field__error" id="e-capacity" role="alert"></p>
+                    </div>
+                  </fieldset>
+
+                  <fieldset class="card group">
+                    <legend class="group__legend"><span>C</span> Simulation settings</legend>
+
+                    <div class="field-row">
+                      <div class="field">
+                        <label class="field__label" for="f-duration">Run length</label>
+                        <div class="field__control">
+                          <input id="f-duration" name="duration" type="number" inputmode="decimal" step="any" min="1" max="100000" value="1000" required aria-describedby="h-duration e-duration" />
+                          <span class="field__unit">hours</span>
+                        </div>
+                        <p class="field__help" id="h-duration">Length of each replication, warm-up included.</p>
+                        <p class="field__error" id="e-duration" role="alert"></p>
+                      </div>
+
+                      <div class="field">
+                        <label class="field__label" for="f-warmup">Warm-up period</label>
+                        <div class="field__control">
+                          <input id="f-warmup" name="warmup" type="number" inputmode="decimal" step="any" min="0" value="100" required aria-describedby="h-warmup e-warmup" />
+                          <span class="field__unit">hours</span>
+                        </div>
+                        <p class="field__help" id="h-warmup">Early data that is discarded, because the system starts empty.</p>
+                        <p class="field__error" id="e-warmup" role="alert"></p>
+                      </div>
+                    </div>
+
+                    <div class="field-row">
+                      <div class="field">
+                        <label class="field__label" for="f-replications">Replications</label>
+                        <div class="field__control">
+                          <input id="f-replications" name="replications" type="number" inputmode="numeric" step="1" min="2" max="200" value="20" required aria-describedby="h-replications e-replications" />
+                          <span class="field__unit">runs</span>
+                        </div>
+                        <p class="field__help" id="h-replications">More replications give a narrower confidence interval.</p>
+                        <p class="field__error" id="e-replications" role="alert"></p>
+                      </div>
+
+                      <div class="field">
+                        <label class="field__label" for="f-seed">Random seed</label>
+                        <div class="field__control">
+                          <input id="f-seed" name="seed" type="number" inputmode="numeric" step="1" min="0" max="4294967295" value="12345" required aria-describedby="h-seed e-seed" />
+                          <button type="button" class="field__action" id="btn-seed">
+                            <svg class="icon" aria-hidden="true"><use href="#i-shuffle" /></svg>
+                            <span>Random</span>
+                          </button>
+                        </div>
+                        <p class="field__help" id="h-seed">The same seed always gives the same results.</p>
+                        <p class="field__error" id="e-seed" role="alert"></p>
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
+
+                <aside class="setup__preview" aria-labelledby="ticket-title">
+                  <div class="ticket" id="ticket">
+                    <div class="ticket__head">
+                      <p class="ticket__label" id="ticket-title">Queue model</p>
+                      <p class="ticket__model" id="ticket-model">M/M/1</p>
+                      <p class="ticket__sub" id="ticket-sub">FIFO · unlimited capacity</p>
+                    </div>
+
+                    <div class="ticket__tear" aria-hidden="true"></div>
+
+                    <div class="ticket__gauge">
+                      <div class="gauge__head">
+                        <span class="gauge__label">Traffic intensity <i>ρ</i> = λ / (c·μ)</span>
+                        <output class="gauge__value" id="ticket-rho" for="f-lambda f-mu">0.800</output>
+                      </div>
+                      <div class="gauge__track" aria-hidden="true">
+                        <div class="gauge__fill" id="ticket-rho-fill"></div>
+                        <div class="gauge__limit"><span>1</span></div>
+                      </div>
+                      <p class="gauge__state" id="ticket-state"></p>
+                    </div>
+
+                    <div class="banner" id="ticket-banner" role="status" aria-live="polite" hidden></div>
+
+                    <div class="ticket__metrics">
+                      <p class="ticket__label">According to the formulas</p>
+                      <dl class="quick" id="ticket-metrics"></dl>
+                    </div>
+
+                    <div class="ticket__tear" aria-hidden="true"></div>
+
+                    <div class="ticket__foot" aria-hidden="true">
+                      <div class="barcode" id="ticket-barcode"></div>
+                      <p class="ticket__serial">SEED <span id="ticket-seed">12345</span></p>
+                    </div>
+                  </div>
+                </aside>
+
+                <div class="actionbar">
+                  <div class="actionbar__status" id="run-status" role="status" aria-live="polite">
+                    <span class="actionbar__model" id="bar-model">M/M/1 · ρ 0.800</span>
+                    <span class="actionbar__work" id="bar-work"></span>
+                  </div>
+                  <div class="progress" id="run-progress" hidden>
+                    <div class="progress__bar" id="run-progress-bar"></div>
+                  </div>
+                  <button type="button" class="btn btn--ghost" id="btn-cancel" hidden>Cancel</button>
+                  <button type="submit" class="btn btn--primary btn--lg" id="btn-run">
+                    <span class="btn__spinner" aria-hidden="true"></span>
+                    <span id="btn-run-label">Run simulation</span>
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                  </button>
+                </div>
+                <p class="form-error" id="run-error" role="alert"></p>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================ LAYER 02: RESULTS ============================ -->
+        <section class="layer layer--results" data-layer="results" data-state="ahead" style="--i: 1" aria-labelledby="title-results" inert>
+          <header class="layer__tab">
+            <span class="layer__num" aria-hidden="true">02</span>
+            <h2 class="layer__title" id="title-results" tabindex="-1">Results</h2>
+            <p class="layer__hint">Formulas side by side with the simulation</p>
+            <a class="layer__return" href="#results">
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+              <span>Back to <span class="sr-only">layer 02,</span> Results</span>
+            </a>
+          </header>
+
+          <div class="layer__body">
+            <div class="wrap">
+              <div class="empty" id="results-empty">
+                <p class="empty__num" aria-hidden="true">02</p>
+                <h3 class="empty__title">No results yet</h3>
+                <p>Set the parameters on layer 01, then run the simulation. The comparison table will appear here.</p>
+                <a class="btn btn--primary" href="#setup">
+                  <svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+                  <span>Go to Setup</span>
+                </a>
+              </div>
+
+              <div id="results-content" hidden>
+                <div class="result-head">
+                  <div>
+                    <p class="eyebrow" id="results-eyebrow"></p>
+                    <h3 class="result-head__title" id="results-verdict"></h3>
+                    <p class="result-head__lead" id="results-lead"></p>
+                  </div>
+                  <ul class="meta" id="results-meta" aria-label="Settings used"></ul>
+                </div>
+
+                <div class="banner banner--note" id="results-stale" hidden>
+                  <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>
+                  <div>
+                    <p class="banner__title">The parameters have changed</p>
+                    <p>The results below come from the previous settings. Run again on the Setup layer to update them.</p>
+                  </div>
+                </div>
+
+                <div class="banner" id="results-banner" hidden></div>
+
+                <div class="card compare-card">
+                  <table class="compare" id="results-table">
+                    <caption class="sr-only">
+                      Comparison of queueing metrics: the analytic formulas and the simulation
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Metric</th>
+                        <th scope="col" class="num"><span class="tag tag--analytic">Analytic</span></th>
+                        <th scope="col" class="num"><span class="tag tag--simulated">Simulation</span> <small>mean ± 95% CI</small></th>
+                        <th scope="col" class="num">Difference</th>
+                        <th scope="col" class="center">Formula vs. the simulation's CI</th>
+                      </tr>
+                    </thead>
+                    <tbody id="results-rows"></tbody>
+                  </table>
+                  <p class="compare__legend" aria-hidden="true">
+                    <span><i class="key key--ci"></i> 95% CI of the simulation</span>
+                    <span><i class="key key--mean"></i> simulation mean</span>
+                    <span><i class="key key--analytic"></i> formula value</span>
+                  </p>
+                </div>
+
+                <div class="card extra-card" id="results-extra" hidden>
+                  <h4 class="card__title" id="results-extra-title"></h4>
+                  <table class="compare compare--extra">
+                    <caption class="sr-only">More detail</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Quantity</th>
+                        <th scope="col" class="num"><span class="tag tag--analytic">Analytic</span></th>
+                        <th scope="col" class="num"><span class="tag tag--simulated">Simulation</span> <small>mean ± 95% CI</small></th>
+                        <th scope="col" class="num">Difference</th>
+                      </tr>
+                    </thead>
+                    <tbody id="results-extra-rows"></tbody>
+                  </table>
+                  <p class="card__note" id="results-extra-note"></p>
+                </div>
+
+                <details class="card howto">
+                  <summary>How to read this table</summary>
+                  <div class="howto__body">
+                    <p>
+                      <b>Analytic</b> is the exact value from the formulas, valid once the system has
+                      been running for a very long time. <b>Simulation</b> is an estimate from a
+                      number of replications; the ± sign gives the 95% confidence interval, the
+                      plausible range for the true value.
+                    </p>
+                    <p>
+                      If the formula value falls inside the interval, the two agree. If it falls
+                      outside, the most common causes are:
+                    </p>
+                    <ul>
+                      <li><b>ρ ≥ 1</b>: there is no steady state, so the formulas simply do not apply.</li>
+                      <li><b>ρ close to 1</b>: the system needs a very long time to reach steady state. Lengthen the run and the warm-up.</li>
+                      <li><b>Warm-up too short</b>: the empty start gets counted and drags the averages down.</li>
+                      <li><b>Chance</b>: a 95% interval misses about 1 time in 20. Try another seed.</li>
+                    </ul>
+                  </div>
+                </details>
+
+                <div class="actions">
+                  <a class="btn btn--ghost" href="#setup">
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+                    <span>Change parameters</span>
+                  </a>
+                  <a class="btn btn--primary btn--lg" href="#live">
+                    <span>Watch the simulation</span>
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-right" /></svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================ LAYER 03: LIVE ============================ -->
+        <section class="layer layer--live" data-layer="live" data-state="ahead" style="--i: 2" aria-labelledby="title-live" inert>
+          <header class="layer__tab">
+            <span class="layer__num" aria-hidden="true">03</span>
+            <h2 class="layer__title" id="title-live" tabindex="-1">Live</h2>
+            <p class="layer__hint">Watch the queue run</p>
+            <a class="layer__return" href="#live">
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+              <span>Back to <span class="sr-only">layer 03,</span> Live</span>
+            </a>
+          </header>
+
+          <div class="layer__body">
+            <div class="wrap">
+              <div class="empty" id="live-empty">
+                <p class="empty__num" aria-hidden="true">03</p>
+                <h3 class="empty__title">Nothing to watch yet</h3>
+                <p>Run a simulation on layer 01 first. The queue animation and its charts will appear here.</p>
+                <a class="btn btn--primary" href="#setup">
+                  <svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+                  <span>Go to Setup</span>
+                </a>
+              </div>
+
+              <div id="live-content" hidden>
+                <div class="live-head">
+                  <div>
+                    <p class="eyebrow" id="live-eyebrow"></p>
+                    <h3 class="live-head__title">One replication, <mark>event by event.</mark></h3>
+                  </div>
+                  <div class="clock" aria-live="off">
+                    <span class="phase" id="live-phase">Warm-up</span>
+                    <span class="clock__time" id="live-clock">0 h 00 m</span>
+                    <span class="clock__of" id="live-of"></span>
+                  </div>
+                </div>
+
+                <div class="banner banner--note" id="live-stale" hidden>
+                  <svg class="icon" aria-hidden="true"><use href="#i-info" /></svg>
+                  <div>
+                    <p class="banner__title">The parameters have changed</p>
+                    <p>This animation still uses the previous settings. Run again on the Setup layer to update it.</p>
+                  </div>
+                </div>
+
+                <div class="scene">
+                  <canvas id="live-canvas" role="img" aria-label="Queue animation: customers arrive from the left, wait in the queue, get served at a server, then leave on the right"></canvas>
+                  <p class="sr-only" id="live-announce" role="status" aria-live="polite"></p>
+                  <div class="scene__progress" aria-hidden="true"><i id="live-progress"></i></div>
+                </div>
+
+                <div class="controls">
+                  <div class="controls__buttons">
+                    <button type="button" class="btn btn--primary" id="live-play" aria-pressed="false">
+                      <svg class="icon icon--solid" aria-hidden="true"><use id="live-play-icon" href="#i-play" /></svg>
+                      <span id="live-play-label">Play</span>
+                    </button>
+                    <button type="button" class="btn btn--ghost" id="live-restart">
+                      <svg class="icon" aria-hidden="true"><use href="#i-restart" /></svg>
+                      <span>Restart</span>
+                    </button>
+                    <button type="button" class="btn btn--ghost" id="live-skip">
+                      <svg class="icon" aria-hidden="true"><use href="#i-skip" /></svg>
+                      <span>Skip to end</span>
+                    </button>
+                  </div>
+                  <div class="speed">
+                    <label class="speed__label" for="live-speed">Speed</label>
+                    <input type="range" id="live-speed" min="0" max="100" step="1" value="22" aria-describedby="live-speed-out" />
+                    <output class="speed__out" id="live-speed-out" for="live-speed"></output>
+                  </div>
+                </div>
+
+                <ul class="legend" aria-label="Animation key">
+                  <li><i class="dot dot--regular"></i> customer</li>
+                  <li id="legend-priority" hidden><i class="dot dot--priority"></i> priority customer</li>
+                  <li id="legend-rejected" hidden><i class="dot dot--rejected"></i> turned away because the system is full</li>
+                  <li><i class="dot dot--ring"></i> a closed ring means service is complete</li>
+                </ul>
+
+                <dl class="stats" id="live-stats"></dl>
+
+                <div class="charts">
+                  <figure class="chart-card">
+                    <figcaption>
+                      <h4 class="chart-card__title">Queue length over time</h4>
+                      <p class="chart-card__sub" id="chart-queue-sub"></p>
+                    </figcaption>
+                    <div class="chart-card__plot">
+                      <canvas id="chart-queue" role="img" aria-label="Chart of queue length over simulated time" aria-describedby="chart-queue-summary"></canvas>
+                      <p class="chart-card__fallback" hidden>The chart could not be loaded because the Chart.js library failed to download. Check your internet connection and reload the page.</p>
+                    </div>
+                    <p class="chart-card__summary" id="chart-queue-summary"></p>
+                  </figure>
+
+                  <figure class="chart-card">
+                    <figcaption>
+                      <h4 class="chart-card__title">Waiting-time distribution</h4>
+                      <p class="chart-card__sub" id="chart-wait-sub"></p>
+                    </figcaption>
+                    <div class="chart-card__plot">
+                      <canvas id="chart-wait" role="img" aria-label="Histogram of customer waiting times" aria-describedby="chart-wait-summary"></canvas>
+                      <p class="chart-card__fallback" hidden>The chart could not be loaded because the Chart.js library failed to download. Check your internet connection and reload the page.</p>
+                    </div>
+                    <p class="chart-card__summary" id="chart-wait-summary"></p>
+                    <details class="datatable">
+                      <summary>View the data as a table</summary>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th scope="col">Waiting time (minutes)</th>
+                            <th scope="col" class="num">Simulation</th>
+                            <th scope="col" class="num">FIFO formula</th>
+                          </tr>
+                        </thead>
+                        <tbody id="chart-wait-rows"></tbody>
+                      </table>
+                    </details>
+                  </figure>
+                </div>
+
+                <p class="footnote" id="live-note"></p>
+
+                <div class="actions">
+                  <a class="btn btn--ghost" href="#results">
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-left" /></svg>
+                    <span>Back to the results table</span>
+                  </a>
+                  <a class="btn btn--ghost" href="#setup">
+                    <span>Change parameters</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <noscript>
+      <p class="noscript">This simulator needs JavaScript. Enable JavaScript in your browser and reload the page.</p>
+    </noscript>
+  </body>
+</html>
