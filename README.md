@@ -8,6 +8,25 @@ formulas can be trusted and when they cannot.
 Built with plain HTML, CSS, and JavaScript. There is no framework and no build
 step, so it can be hosted on GitHub Pages as is.
 
+**Live demo: <https://arkofarrel24.github.io/queuelab/>**
+
+![Setup layer: parameter form, quick examples, and a live queue preview](docs/screenshots/setup.png)
+
+| Results | Live |
+|---|---|
+| ![Results layer: formula values next to the simulation mean and its 95% confidence interval](docs/screenshots/results.png) | ![Live layer: queue length over time and the waiting-time histogram against the formula](docs/screenshots/live.png) |
+
+**Highlights**
+
+- Discrete-event simulation engine written from scratch (min-heap event list,
+  seeded sfc32 generator, separate random streams per source), fully separate
+  from the UI and run in a Web Worker.
+- Analytic formulas for M/M/1, M/M/c (Erlang C), M/M/c/K, and two-class
+  priority (Cobham), compared against the simulation with 95% confidence
+  intervals.
+- 79 automated tests, including checks against published textbook examples.
+- No framework and no build step: plain HTML, CSS, and JavaScript modules.
+
 ## Contents
 
 - [What it does](#what-it-does)
